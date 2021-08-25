@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+env_logger = "0.8.4"
 hidapi = "0.5.0"
+log = "0.4"
 tfc = "0.6.0"
 
 [profile.dev]

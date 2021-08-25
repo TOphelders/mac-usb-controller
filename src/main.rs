@@ -1,8 +1,9 @@
 use hidapi;
-
-use tfc::{Context, traits::*, Key};
 use std::thread;
 use std::time::Duration;
+
+use log::{debug, error, info};
+use tfc::{Context, traits::*, Key};
 
 #[derive(Copy, Clone)]
 #[repr(u8)]
@@ -72,10 +73,10 @@ impl Input {
             buttons: 0,
             extra: 0,
             dpad: 15,
-            lstick1: 255,
-            lstick2: 255,
-            rstick1: 255,
-            rstick2: 255,
+            lstick1: 128,
+            lstick2: 128,
+            rstick1: 128,
+            rstick2: 128,
             unused: 0,
         }
     }
@@ -195,6 +196,8 @@ impl Controller {
 }
 
 fn main() {
+    env_logger::init_from_env(env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"));
+
     let target = "HORIPAD S";
     let mut ctx = Context::new().unwrap();
     thread::sleep(Duration::from_millis(10));
@@ -206,14 +209,14 @@ fn main() {
                 None => {}
             };
         }
-        Err(e) => println!("Error connecting device {:?}", e)
+        Err(e) => error!("Error connecting device {:?}", e)
     }
 
-    println!("Shutting down...")
+    info!("Shutting down...")
 }
 
 fn poll(device: &hidapi::HidDevice, ctx: &mut Context) {
-    println!("Polling Device...");
+    info!("Polling Device...");
     let mut controller = Controller::new();
     let mut i: u8 = 0;
 
@@ -245,7 +248,7 @@ fn read_input(device: &hidapi::HidDevice) -> Result<Input, hidapi::HidError> {
 
     device.read(&mut buf[..])?;
     let input = Input::new(buf);
-    // dbg!("Read: {:?}", &input);
+    debug!("Read: {:?}", &input);
 
     thread::sleep(Duration::from_millis(1));
     Ok(input)
@@ -254,23 +257,23 @@ fn read_input(device: &hidapi::HidDevice) -> Result<Input, hidapi::HidError> {
 fn open_target(api: &hidapi::HidApi, target: &str) -> Option<hidapi::HidDevice> {
     for device_info in api.devices() {
         if device_info.product_string.as_ref()? == target {
-            println!("Opening device...");
+            info!("Opening device...");
 
             return match device_info.open_device(api) {
                 Ok(device) => {
                     let manufacturer = device.get_manufacturer_string().unwrap_or_default().unwrap_or_default();
                     let product = device.get_product_string().unwrap_or_default().unwrap_or_default();
-                    println!("Product: {:?}, manufacturer: {:?}", product, manufacturer);
+                    info!("Product: {:?}, manufacturer: {:?}", product, manufacturer);
                     Some(device)
                 },
                 Err(e) => {
-                    println!("Could not open device: {:?}", e);
+                    error!("Could not open device: {:?}", e);
                     None
                 }
             };
         }
     }
 
-    println!("Unable to find provided target {:?}", target);
+    error!("Unable to find provided target {:?}", target);
     None
 }
