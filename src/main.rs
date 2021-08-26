@@ -180,6 +180,8 @@ impl Controller {
         Ok(0)
     }
 
+    // The actual dpad input values just increase sequentially
+    // Here we convert them to a nicer bitwise format
     fn _convert_dpad(&self, dpad: u8) -> Dpad {
         match dpad {
             0 => Dpad::U,
@@ -233,7 +235,8 @@ fn poll(device: &hidapi::HidDevice, ctx: &mut Context) {
                 }
             },
             Err(_) => { 
-                match controller.update(Input::default(), ctx) { // assume no input
+                // assume no input
+                match controller.update(Input::default(), ctx) {
                     Ok(_) => continue,
                     Err(_) => controller.clear_state()
                 }
